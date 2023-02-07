@@ -189,7 +189,7 @@ def heuristic_forward_search(pi, s, g, all_cubes):
     while options:
         # 5th and 6th line of HFS function
         selected_action_index = np.argmin(delta_with_g)
-        # a = options.pop(selected_action_index)
+        options.pop(selected_action_index)
         new_a = actions[selected_action_index]
         # print('aaaa: ', a[0])
         # print('next state: ', lambdas[selected_action_index])
@@ -207,7 +207,7 @@ def heuristic_forward_search(pi, s, g, all_cubes):
 
 def main():
     pi = []
-    s0 = load_initial_state('blocks-world (simplified)/simple.txt')
+    s0 = load_initial_state('blocks-world (simplified)/reversal4.txt')
     print(s0)
     pi = heuristic_forward_search(pi, s0['initial'], s0['goal'], s0['cube'])
     print(pi)

@@ -3,7 +3,7 @@ from operators import Operators
 
 def load_initial_state(filename):
     result = {
-        'cube': [],
+        'cubes': [],
         'initial': [],
         'goal': []
     }
@@ -23,7 +23,7 @@ def load_initial_state(filename):
     goal_state = [p for p in f[goal_end_index + 1:].split('\n') if p != '']
 
     for i in range(cubes_count):
-        result['cube'].append(cubes_names[i])
+        result['cubes'].append(cubes_names[i])
 
     for i in range(len(initial_state_predicates)):
         if initial_state_predicates[i] == 'ARM-EMPTY':

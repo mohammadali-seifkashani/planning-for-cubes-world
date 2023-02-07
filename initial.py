@@ -1,51 +1,129 @@
-from operators import Operators
+class Operators:
+    def __init__(self):
+        pass
+
+    def pick_up(self, s: list, ob1: str, just_positive=False):
+        s = s.copy()
+        # preconditions
+        check = self.pick_up_preconditions(s, ob1)
+        if type(check) == str:
+            raise Exception(check)
+
+        # effects
+        s.append(f'HOLDING({ob1})')
+        if just_positive:
+            return [f'HOLDING({ob1})']
+        ob1_clear_index = s.index(f'CLEAR({ob1})')
+        s.pop(ob1_clear_index)
+        ob1_ontable_index = s.index(f'ON_TABLE({ob1})')
+        s.pop(ob1_ontable_index)
+        arm_empty_index = s.index('ARM-EMPTY')
+        s.pop(arm_empty_index)
+        return s, f'PICK-UP({ob1})'
+
+    @staticmethod
+    def pick_up_preconditions(s: list, ob1: str):
+        if f'CLEAR({ob1})' not in s:
+            return 'Object must be clear!'
+        if f'ON_TABLE({ob1})' not in s:
+            return 'Object must be on table!'
+        if 'ARM-EMPTY' not in s:
+            return 'Arm must be empty!'
+        return [f'CLEAR({ob1})', f'ON_TABLE({ob1})', 'ARM-EMPTY']
+
+    def put_down(self, s: list, ob1: str, just_positive=False):
+        s = s.copy()
+        # preconditions
+        check = self.put_down_preconditions(s, ob1)
+        if type(check) == str:
+            raise Exception(check)
+
+        # effects
+        positive_effects = list()
+        positive_effects.append(f'CLEAR({ob1})')
+        positive_effects.append(f'ON_TABLE({ob1})')
+        positive_effects.append('ARM-EMPTY')
+        if just_positive:
+            return positive_effects
+        s.extend(positive_effects)
+        ob1_holding_index = s.index(f'HOLDING({ob1})')
+        s.pop(ob1_holding_index)
+        return s, f'PUT-DOWN({ob1})'
+
+    @staticmethod
+    def put_down_preconditions(s: list, ob1: str):
+        if f'HOLDING({ob1})' not in s:
+            return 'Object must be holding!'
+        if 'ARM-EMPTY' in s:
+            return 'Arm must not be empty!'
+        return [f'HOLDING({ob1})']  # TODO adding ~ARM_EMPTY
+
+    def stack(self, s: list, sob: str, sunderob: str, just_positive=False):
+        s = s.copy()
+        # preconditions
+        check = self.stack_preconditions(s, sob, sunderob)
+        if type(check) == str:
+            raise Exception(check)
+
+        # effects
+        positive_effects = list()
+        positive_effects.append(f'CLEAR({sob})')
+        positive_effects.append('ARM-EMPTY')
+        positive_effects.append(f'ON({sob},{sunderob})')
+        if just_positive:
+            return positive_effects
+        s.extend(positive_effects)
+        sob_holding_index = s.index(f'HOLDING({sob})')
+        s.pop(sob_holding_index)
+        sunderob_clear_index = s.index(f'CLEAR({sunderob})')
+        s.pop(sunderob_clear_index)
+        return s, f'STACK({sob},{sunderob})'
+
+    @staticmethod
+    def stack_preconditions(s: list, sob: str, sunderob: str):
+        if sob == sunderob:
+            return 'Equal objects passed!'
+        if f'HOLDING({sob})' not in s:
+            return 'First object must be holding!'
+        # if 'ARM-EMPTY' in s:
+        #     return 'Arm must not be empty!'
+        if f'CLEAR({sunderob})' not in s:
+            return 'Second object must be clear!'
+        return [f'HOLDING({sob})', f'CLEAR({sunderob})']  # TODO adding ~ARM_EMPTY
+
+    def unstack(self, s: list, sob: str, sunderob: str, just_positive=False):
+        s = s.copy()
+        # preconditions
+        check = self.unstack_preconditions(s, sob, sunderob)
+        if type(check) == str:
+            raise Exception(check)
+
+        # effects
+        positive_effects = list()
+        positive_effects.append(f'HOLDING({sob})')
+        positive_effects.append(f'CLEAR({sunderob})')
+        if just_positive:
+            return positive_effects
+        s.extend(positive_effects)
+        sob_clear_index = s.index(f'CLEAR({sob})')
+        s.pop(sob_clear_index)
+        arm_empty_index = s.index(f'ARM-EMPTY')
+        s.pop(arm_empty_index)
+        on_sob_sunderob_index = s.index(f'ON({sob},{sunderob})')
+        s.pop(on_sob_sunderob_index)
+        return s, f'UNSTACK({sob},{sunderob})'
+
+    @staticmethod
+    def unstack_preconditions(s: list, sob: str, sunderob: str):
+        if sob == sunderob:
+            return 'Equal objects passed!'
+        if f'ON({sob},{sunderob})' not in s:
+            return 'First object must be on second one (sob.down != sunderob)!'
+        if f'CLEAR({sob})' not in s:
+            return 'First object must be clear!'
+        if 'ARM-EMPTY' not in s:
+            return 'Arm must be empty!'
+        return [f'ON({sob},{sunderob})', f'CLEAR({sob})', 'ARM-EMPTY']
 
 
-def load_initial_state(filename):
-    result = {
-        'cube': [],
-        'initial': [],
-        'goal': []
-    }
-    f = open(filename, 'r').read()
-    cubes_index = f.index('OBJECTS')
-    initial_state_index = f.index('INITIAL-STATE')
-    goals_index = f.index('GOALS')
-
-    cubes_end_index = f[cubes_index:].index('\n')
-    cubes_count = int(f[cubes_index + 8:cubes_end_index])
-    cubes_names = [cube for cube in f[cubes_end_index + 1:initial_state_index].split('\n') if cube != '']
-
-    initial_state_end_index = initial_state_index + f[initial_state_index:].index('\n')
-    initial_state_predicates = [p for p in f[initial_state_end_index + 1:goals_index].split('\n') if p != '']
-
-    goal_end_index = goals_index + f[goals_index:].index('\n')
-    goal_state = [p for p in f[goal_end_index + 1:].split('\n') if p != '']
-
-    for i in range(cubes_count):
-        result['cube'].append(cubes_names[i])
-
-    for i in range(len(initial_state_predicates)):
-        if initial_state_predicates[i] == 'ARM-EMPTY':
-            result['initial'].append('ARM-EMPTY')
-        elif initial_state_predicates[i] == 'CLEAR':
-            result['initial'].append(f'CLEAR({initial_state_predicates[i+1]})')
-        elif initial_state_predicates[i] == 'ON':
-            result['initial'].append(f'ON({initial_state_predicates[i+1]},{initial_state_predicates[i+2]})')
-        elif initial_state_predicates[i] == 'ON-TABLE':
-            result['initial'].append(f'ON-TABLE({initial_state_predicates[i+1]})')
-
-    for i in range(len(goal_state)):
-        if goal_state[i] == 'ARM-EMPTY':
-            result['goal'].append('ARM-EMPTY')
-        elif goal_state[i] == 'CLEAR':
-            result['goal'].append(f'CLEAR({goal_state[i + 1]})')
-        elif goal_state[i] == 'ON':
-            result['goal'].append(f'ON({goal_state[i + 1]},{goal_state[i + 2]})')
-        elif goal_state[i] == 'ON-TABLE':
-            result['goal'].append(f'ON-TABLE({goal_state[i + 1]})')
-
-    # result['initial'] = tuple(result['initial'])
-    # result['goal'] = tuple(result['goal'])
-    return result
-
+operators = Operators()

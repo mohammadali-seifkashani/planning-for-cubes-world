@@ -12,14 +12,14 @@ class Operators:
         # effects
         s.append(f'HOLDING({ob1})')
         if just_positive:
-            return list(set(s))
+            return [f'HOLDING({ob1})']
         ob1_clear_index = s.index(f'CLEAR({ob1})')
         s.pop(ob1_clear_index)
         ob1_ontable_index = s.index(f'ON_TABLE({ob1})')
         s.pop(ob1_ontable_index)
         arm_empty_index = s.index('ARM-EMPTY')
         s.pop(arm_empty_index)
-        return s
+        return s, f'PICK-UP({ob1})'
 
     @staticmethod
     def pick_up_preconditions(s: list, ob1: str):
@@ -39,14 +39,16 @@ class Operators:
             raise Exception(check)
 
         # effects
-        s.append(f'CLEAR({ob1})')
-        s.append(f'ON_TABLE({ob1})')
-        s.append('ARM-EMPTY')
+        positive_effects = list()
+        positive_effects.append(f'CLEAR({ob1})')
+        positive_effects.append(f'ON_TABLE({ob1})')
+        positive_effects.append('ARM-EMPTY')
         if just_positive:
-            return list(set(s))
+            return positive_effects
+        s.extend(positive_effects)
         ob1_holding_index = s.index(f'HOLDING({ob1})')
         s.pop(ob1_holding_index)
-        return s
+        return s, f'PUT-DOWN({ob1})'
 
     @staticmethod
     def put_down_preconditions(s: list, ob1: str):
@@ -64,16 +66,18 @@ class Operators:
             raise Exception(check)
 
         # effects
-        s.append(f'CLEAR({sob})')
-        s.append('ARM-EMPTY')
-        s.append(f'ON({sob},{sunderob})')
+        positive_effects = list()
+        positive_effects.append(f'CLEAR({sob})')
+        positive_effects.append('ARM-EMPTY')
+        positive_effects.append(f'ON({sob},{sunderob})')
         if just_positive:
-            return list(set(s))
+            return positive_effects
+        s.extend(positive_effects)
         sob_holding_index = s.index(f'HOLDING({sob})')
         s.pop(sob_holding_index)
         sunderob_clear_index = s.index(f'CLEAR({sunderob})')
         s.pop(sunderob_clear_index)
-        return s
+        return s, f'STACK({sob},{sunderob})'
 
     @staticmethod
     def stack_preconditions(s: list, sob: str, sunderob: str):
@@ -81,8 +85,8 @@ class Operators:
             return 'Equal objects passed!'
         if f'HOLDING({sob})' not in s:
             return 'First object must be holding!'
-        if 'ARM-EMPTY' in s:
-            return 'Arm must not be empty!'
+        # if 'ARM-EMPTY' in s:
+        #     return 'Arm must not be empty!'
         if f'CLEAR({sunderob})' not in s:
             return 'Second object must be clear!'
         return [f'HOLDING({sob})', f'CLEAR({sunderob})']  # TODO adding ~ARM_EMPTY
@@ -95,17 +99,19 @@ class Operators:
             raise Exception(check)
 
         # effects
-        s.append(f'HOLDING({sob})')
-        s.append(f'CLEAR({sunderob})')
+        positive_effects = list()
+        positive_effects.append(f'HOLDING({sob})')
+        positive_effects.append(f'CLEAR({sunderob})')
         if just_positive:
-            return list(set(s))
+            return positive_effects
+        s.extend(positive_effects)
         sob_clear_index = s.index(f'CLEAR({sob})')
         s.pop(sob_clear_index)
         arm_empty_index = s.index(f'ARM-EMPTY')
         s.pop(arm_empty_index)
         on_sob_sunderob_index = s.index(f'ON({sob},{sunderob})')
         s.pop(on_sob_sunderob_index)
-        return s
+        return s, f'UNSTACK({sob},{sunderob})'
 
     @staticmethod
     def unstack_preconditions(s: list, sob: str, sunderob: str):

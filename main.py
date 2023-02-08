@@ -189,7 +189,7 @@ def heuristic_forward_search(pi, s, g, all_cubes):
     while options:
         # 5th and 6th line of HFS function
         selected_action_index = np.argmin(delta_with_g)
-        # a = options.pop(selected_action_index)
+        options.pop(selected_action_index)
         new_a = actions[selected_action_index]
         # print('aaaa: ', a[0])
         # print('next state: ', lambdas[selected_action_index])

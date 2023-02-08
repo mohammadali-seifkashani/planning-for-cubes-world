@@ -4,8 +4,10 @@ b
 c
 
 
-INITIAL-STATE:4
+INITIAL-STATE:5
 ARM-EMPTY
+CLEAR
+a
 ON-TABLE
 c
 ON
@@ -16,9 +18,11 @@ a
 b
 
 
-GOALS:2
+GOALS:3
 ON-TABLE
 a
 ON
 b
 a
+CLEAR
+b

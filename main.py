@@ -162,7 +162,7 @@ def delta(s, g, all_cubes):
 
 
 def heuristic_forward_search(pi, s, g, all_cubes):
-    # print('state', s)
+    print('state', s)
     if satisfies(s, g):
         return pi
 
@@ -207,9 +207,9 @@ def heuristic_forward_search(pi, s, g, all_cubes):
 
 def main():
     pi = []
-    s0 = load_initial_state('blocks-world (simplified)/simple.txt')
+    s0 = load_initial_state('our_tests/test1.txt')
     print(s0)
-    pi = heuristic_forward_search(pi, s0['initial'], s0['goal'], s0['cube'])
+    pi = heuristic_forward_search(pi, s0['initial'], s0['goal'], s0['cubes'])
     print(pi)
 
 

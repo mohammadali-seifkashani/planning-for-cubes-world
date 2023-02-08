@@ -36,5 +36,8 @@ def make_test(cubes: list, s: list, g: list):
     return result
 
 
-r = make_test(['a', 'b', 'c'], ['ARM-EMPTY', 'ON-TABLE(c)', 'ON(b,c)', 'ON(a,b)'], ['ON-TABLE(a)', 'ON(b,a)'])
+r = make_test(['a', 'b', 'c'],
+              ['ARM-EMPTY', 'CLEAR(a)', 'ON-TABLE(c)', 'ON(b,c)', 'ON(a,b)'],
+              ['ON-TABLE(a)', 'ON(b,a)', 'CLEAR(b)']
+              )
 print(r)

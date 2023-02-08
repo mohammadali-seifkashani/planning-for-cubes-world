@@ -46,3 +46,5 @@ def load_initial_state(filename):
             result['goal'].append(f'ON-TABLE({goal_state[i + 1]})')
 
     return result
+
+

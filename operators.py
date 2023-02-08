@@ -15,7 +15,7 @@ class Operators:
             return [f'HOLDING({ob1})']
         ob1_clear_index = s.index(f'CLEAR({ob1})')
         s.pop(ob1_clear_index)
-        ob1_ontable_index = s.index(f'ON_TABLE({ob1})')
+        ob1_ontable_index = s.index(f'ON-TABLE({ob1})')
         s.pop(ob1_ontable_index)
         arm_empty_index = s.index('ARM-EMPTY')
         s.pop(arm_empty_index)
@@ -25,11 +25,11 @@ class Operators:
     def pick_up_preconditions(s: list, ob1: str):
         if f'CLEAR({ob1})' not in s:
             return 'Object must be clear!'
-        if f'ON_TABLE({ob1})' not in s:
+        if f'ON-TABLE({ob1})' not in s:
             return 'Object must be on table!'
         if 'ARM-EMPTY' not in s:
             return 'Arm must be empty!'
-        return [f'CLEAR({ob1})', f'ON_TABLE({ob1})', 'ARM-EMPTY']
+        return [f'CLEAR({ob1})', f'ON-TABLE({ob1})', 'ARM-EMPTY']
 
     def put_down(self, s: list, ob1: str, just_positive=False):
         s = s.copy()
@@ -41,7 +41,7 @@ class Operators:
         # effects
         positive_effects = list()
         positive_effects.append(f'CLEAR({ob1})')
-        positive_effects.append(f'ON_TABLE({ob1})')
+        positive_effects.append(f'ON-TABLE({ob1})')
         positive_effects.append('ARM-EMPTY')
         if just_positive:
             return positive_effects

@@ -1,6 +1,7 @@
 import numpy as np
 from initial import load_initial_state
 from operators import operators
+from show_state import show_state
 
 
 def satisfies(s, g):
@@ -46,7 +47,7 @@ def create_all_p(s, all_cubes):
     for cube in all_cubes:
         result[(s, f'CLEAR({cube})')] = np.inf
         result[(s, f'HOLDING({cube})')] = np.inf
-        result[(s, f'ON_TABLE({cube})')] = np.inf
+        result[(s, f'ON-TABLE({cube})')] = np.inf
         for cube2 in all_cubes:
             if cube2 == cube:
                 continue
@@ -162,7 +163,7 @@ def delta(s, g, all_cubes):
 
 
 def heuristic_forward_search(pi, s, g, all_cubes):
-    print('state', s)
+    # print('state', s)
     if satisfies(s, g):
         return pi
 
@@ -207,8 +208,10 @@ def heuristic_forward_search(pi, s, g, all_cubes):
 
 def main():
     pi = []
-    s0 = load_initial_state('our_tests/test1.txt')
+    s0 = load_initial_state('blocks-world (simplified)/twelve-step.txt')
     print(s0)
+    show_state(s0['initial'])
+    show_state(s0['goal'])
     pi = heuristic_forward_search(pi, s0['initial'], s0['goal'], s0['cubes'])
     print(pi)
 

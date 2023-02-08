@@ -1,3 +1,10 @@
+def get_action_name_and_arguments(p):
+    paranthesis_index = p.find('(')
+    action_name = p[:paranthesis_index]
+    arguments = p[paranthesis_index + 1: -1].split(',')
+    return action_name, arguments
+
+
 def make_test(cubes: list, s: list, g: list):
     result = f'OBJECTS:{len(cubes)}\n'
     result += '\n'.join(cubes) + '\n\n\n'
@@ -7,9 +14,7 @@ def make_test(cubes: list, s: list, g: list):
         if p == 'ARM-EMPTY':
             result += 'ARM-EMPTY\n'
         else:
-            paranthesis_index = p.find('(')
-            action_name = p[:paranthesis_index]
-            arguments = p[paranthesis_index + 1: -1].split(',')
+            action_name, arguments = get_action_name_and_arguments(p)
             result += action_name + '\n'
             if len(arguments) == 1:
                 result += arguments[0] + '\n'
@@ -21,9 +26,7 @@ def make_test(cubes: list, s: list, g: list):
         if p == 'ARM-EMPTY':
             result += 'ARM-EMPTY\n'
         else:
-            paranthesis_index = p.find('(')
-            action_name = p[:paranthesis_index]
-            arguments = p[paranthesis_index + 1: -1].split(',')
+            action_name, arguments = get_action_name_and_arguments(p)
             result += action_name + '\n'
             if len(arguments) == 1:
                 result += arguments[0] + '\n'
@@ -36,8 +39,9 @@ def make_test(cubes: list, s: list, g: list):
     return result
 
 
-r = make_test(['a', 'b', 'c'],
-              ['ARM-EMPTY', 'CLEAR(a)', 'ON-TABLE(c)', 'ON(b,c)', 'ON(a,b)'],
-              ['ON-TABLE(a)', 'ON(b,a)', 'CLEAR(b)']
-              )
-print(r)
+# r = make_test(
+#     ['a', 'b', 'c'],
+#     ['ARM-EMPTY', 'CLEAR(a)', 'ON-TABLE(c)', 'ON(b,c)', 'ON(a,b)'],
+#     ['ON-TABLE(a)', 'ON(b,a)', 'CLEAR(b)']
+# )
+# print(r)

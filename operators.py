@@ -54,8 +54,8 @@ class Operators:
     def put_down_preconditions(s: list, ob1: str):
         if f'HOLDING({ob1})' not in s:
             return 'Object must be holding!'
-        if 'ARM-EMPTY' in s:
-            return 'Arm must not be empty!'
+        # if 'ARM-EMPTY' in s:
+        #     return 'Arm must not be empty!'
         return [f'HOLDING({ob1})']  # TODO adding ~ARM_EMPTY
 
     def stack(self, s: list, sob: str, sunderob: str, just_positive=False):

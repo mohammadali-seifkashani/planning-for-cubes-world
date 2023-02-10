@@ -3,6 +3,7 @@ from initial import load_initial_state
 from operators import operators
 import itertools
 
+
 def satisfies(s, g):
     for goal_atom in g:
         if goal_atom not in s:
@@ -96,6 +97,7 @@ def preconds_sum_delta0(actions_preconds, result, s):
 
 
 def get_pair_preconds_delta(s, delta_table, preconds):
+    s = tuple(s)
     k = (s, tuple(preconds))
     if k not in delta_table:
         k = (s, tuple(preconds[::-1]))
@@ -146,12 +148,17 @@ def get_delta_two_predicates(s, delta_table, preconds, positive_effects):
 def update_delta_2(s, delta_table, U, all_cubes):
     result = delta_table.copy()
     options = applicable_options(U, all_cubes)
+    # print('curren U is: ', U)
+    # print('applicable options: ', [i[0] for i in options])
     for action_function, action_args, actions_preconds in options:
-        # print(action_function)
         positive_effects = action_function(*action_args, just_positive=True)
-        # print('positive effects: ', positive_effects)
+        before_len = len(U)
         U += positive_effects
         U = list(set(U))
+        if len(U) == before_len:
+            continue
+        # print(action_function)
+        # print('positive effects: ', positive_effects)
         for p in positive_effects:
             psd = get_delta_one_predicate(s, result, actions_preconds)
             result[(tuple(s), p)] = min(result[(tuple(s), p)], psd)
@@ -164,71 +171,54 @@ def update_delta_2(s, delta_table, U, all_cubes):
 def update_delta(s, result, U, all_cubes):
     options = applicable_options(U, all_cubes)  # [(action_function, (action_inputs), action_preconds)]
     result_copy = result.copy()
-    # print('current state is: ', s)
-    # print('state options :', options)
-    # print('before U is: ', U)
     for action_function, action_args, actions_preconds in options:
-        # TODO functionality for "just_positives" argument isn't implemented yet :)
-        # if True, it should return just positive effects of an action
         positive_effects = action_function(*action_args, just_positive=True)
-        # print('update delta action function: ', action_function, 'positive effects are: ', positive_effects)
-        # in each iteration U will change. 5th line of delta0 code.
         U += positive_effects
         U = list(set(U))
-        # when U changes, more actions (action = option) are applicable next iteration of U. See 4th line of delta0
-        # code. "renew_options" function for this objective.
-
-        # new_options = applicable_options(U, all_cubes)
-        # renew_options(new_options, options)
 
         # line 6th and 7th of delta0 code
         for p in positive_effects:
-            # print('ppppp', p)
-
-            # this is why we needed "actions_preconds" as the 3rd value of tuples of "applicable_options" function.
             psd = preconds_sum_delta0(actions_preconds, result_copy, s)
             result_copy[(tuple(s), p)] = min(result_copy[(tuple(s), p)], psd)
-            # print(f'delta value for {(tuple(s), p)} is: ', result[(tuple(s), p)])
 
-        # print('first update results: ', result_copy)
-
-    # print('after U is: ', U)
     return U, result_copy
 
 
 def get_state_gaol_delta(s, g, result):
-    dist = 0
-    for item in g:
-        dist += result[(tuple(s), item)]
-    return dist
+    dist_list = []
+    for comb in itertools.combinations(g, 2):
+        dist = get_pair_preconds_delta(s, result, list(comb))
+        dist_list.append(dist)
+    return max(dist_list)
+    # dist = 0
+    # for item in g:
+    #     dist += result[(tuple(s), item)]
+    # return dist
 
 
 def delta_2(s, g, all_cubes):
-    # TODO
     initial_data_table = initialize_delta_table(s, all_cubes)
     U = s.copy()
     counter = 1
     while True:
         new_U, new_result = update_delta_2(s, initial_data_table, U, all_cubes)
+        # print(counter, 'rrrrrr', new_result)
+        counter += 1
         if initial_data_table == new_result:
-            print('final result: ', new_result)
-            exit()
-            goal_distance = get_state_gaol_delta(s, g, result)
-            break
+            # print('final result: ', new_result)
+            # print('new U', new_U)
+            goal_distance = get_state_gaol_delta(s, g, initial_data_table)
+            return goal_distance
+            # print('goal_distance', goal_distance)
+            # exit()
+            # break
         else:
             U = new_U
             initial_data_table = new_result
-    pass
+
 
 def delta(s, g, all_cubes):
-    # see first line of implementation of delta function in page 8 of slide
-    # creating all predicates (all p) of delta0 list named "result"
-    # TODO maybe we need to add all (p,q) pairs for delta2 too
     result = create_all_p(s, all_cubes)
-    # print('result', result)
-    # print('delta result: ', result)
-    # U as the same as implementation of 8th page of slide
-    # U will change but s shouldn't change always
     U = s.copy()
     while True:
         new_U, new_result = update_delta(s, result, U, all_cubes)
@@ -241,34 +231,6 @@ def delta(s, g, all_cubes):
             result = new_result
     # print(goal_distance)
     return goal_distance
-    return result
-    # options = actions
-
-        # end of delta0 implementation
-
-        # start of delta2 implementation
-        # for p in positive_effects:
-        #     for q in positive_effects:
-        #         if p == q:
-        #             continue
-        #         min1 = result[(s, p)]
-        #         # TODO "preconds_sum_delta2" function not implemented
-        #         min2 = preconds_sum_delta2((p, actions_preconds), result, s)
-        #         min3 = preconds_sum_delta2((q, actions_preconds), result, s)
-        #         result[(s, (p, q))] = min(min1, min2, min3)
-
-    # compute delta2(s, g). See last line of 12th page of slide.
-    delta2_s_g = 0
-    for p in g:
-        for q in g:
-            if p == q:
-                continue
-            if result[(s, (p, q))] > delta2_s_g:
-                delta2_s_g = result[(s, (p, q))]
-
-    result[(s, g)] = delta2_s_g
-
-    return result
 
 
 def heuristic_forward_search(pi, s, g, all_cubes):
@@ -289,25 +251,22 @@ def heuristic_forward_search(pi, s, g, all_cubes):
     # TODO implementation is based on delta0. We need implementation for delta2!
     for action_function, action_args, actions_preconds in options:
         effects, action = action_function(*action_args, just_positive=False)
-        print('action function is: ', action, 'action effects: ', effects)
+        # print('action function is: ', action, 'action effects: ', effects)
         # delta_out = delta(effects, g, all_cubes)
         delta_out = delta_2(effects, g, all_cubes)
         lambdas.append(effects)
         actions.append(action)
-        # delta_with_g.append(delta_out[(tuple(effects), g)])
         delta_with_g.append(delta_out)
-    print('actions', actions)
-    print('delta', delta_with_g)
-    # exit()
+    # print('actions', actions)
+    # print('delta', delta_with_g)
+
     # "while" part of HFS function
     while options:
         # 5th and 6th line of HFS function
         selected_action_index = np.argmin(delta_with_g)
         options.pop(selected_action_index)
         new_a = actions[selected_action_index]
-        # print('aaaa: ', a[0])
-        # print('next state: ', lambdas[selected_action_index])
-        # print('pi is: ', pi + [a[0]])
+
         # 7th line of HFS function
         pi_prime = heuristic_forward_search(pi + [new_a], lambdas[selected_action_index], g, all_cubes)
 

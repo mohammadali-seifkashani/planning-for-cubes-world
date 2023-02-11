@@ -60,6 +60,7 @@ def show_state(s: list):
             if i < len(result_list[j]):
                 result += result_list[j][i] + '  '
         result += '\n'
+    result = result[:-1]
     if holding:
         result += f"\n{holding}\n"
     print(result)

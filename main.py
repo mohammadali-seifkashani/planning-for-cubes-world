@@ -1,3 +1,5 @@
+from time import time
+
 import numpy as np
 from initial import load_initial_state
 from operators import operators
@@ -26,20 +28,14 @@ def applicable_options(s, all_cubes):
         for cube2 in all_cubes:
             if cube2 == cube:
                 continue
-            stack_precons = operators.stack_preconditions(s, cube, cube2)
+            stack_preconds = operators.stack_preconditions(s, cube, cube2)
             unstack_preconds = operators.unstack_preconditions(s, cube, cube2)
-            if type(stack_precons) == list:
-                result.append((operators.stack, (s, cube, cube2), stack_precons))
+            if type(stack_preconds) == list:
+                result.append((operators.stack, (s, cube, cube2), stack_preconds))
             if type(unstack_preconds) == list:
                 result.append((operators.unstack, (s, cube, cube2), unstack_preconds))
 
     return result
-
-
-def renew_options(new_options, options):
-    for no in new_options:
-        if no not in options:
-            options.append(no)
 
 
 def create_all_p(s, all_cubes):
@@ -84,18 +80,6 @@ def initialize_delta_table(s, all_cubes):
     return merged_result
 
 
-# implementation of delta0(s,p) due to 7th line of delta0 code.
-def preconds_sum_delta0(actions_preconds, result, s):
-    psd = 1
-    s = tuple(s)
-    for ap in actions_preconds:
-        if np.isinf(result[(s, ap)]):
-            psd = np.inf
-            break
-        psd += result[(s, ap)]
-    return psd
-
-
 def get_pair_preconds_delta(s, delta_table, preconds):
     s = tuple(s)
     k = (s, tuple(preconds))
@@ -118,10 +102,6 @@ def get_delta_one_predicate(s, delta_table, preconds):
             pair_combinations_list.append(list(comb))
             delta_value = get_pair_preconds_delta(s, delta_table, list(comb))
             pair_conditions_delta_values.append(delta_value)
-        # if delta_table[(('ON_TABLE(a)', 'ON(c,a)', 'CLEAR(c)', 'HOLDING(b)'), 'HOLDING(a)')] == 3:
-        #     print('preconds', preconds)
-        #     print(pair_conditions_delta_values)
-        #     exit()
         return max(pair_conditions_delta_values) + 1
 
 
@@ -168,23 +148,7 @@ def update_delta_2(s, delta_table, U, all_cubes):
     return U, result
 
 
-def update_delta(s, result, U, all_cubes):
-    options = applicable_options(U, all_cubes)  # [(action_function, (action_inputs), action_preconds)]
-    result_copy = result.copy()
-    for action_function, action_args, actions_preconds in options:
-        positive_effects = action_function(*action_args, just_positive=True)
-        U += positive_effects
-        U = list(set(U))
-
-        # line 6th and 7th of delta0 code
-        for p in positive_effects:
-            psd = preconds_sum_delta0(actions_preconds, result_copy, s)
-            result_copy[(tuple(s), p)] = min(result_copy[(tuple(s), p)], psd)
-
-    return U, result_copy
-
-
-def get_state_gaol_delta(s, g, result):
+def get_state_goal_delta(s, g, result):
     dist_list = []
     for comb in itertools.combinations(g, 2):
         dist = get_pair_preconds_delta(s, result, list(comb))
@@ -207,69 +171,59 @@ def delta_2(s, g, all_cubes):
         if initial_data_table == new_result:
             # print('final result: ', new_result)
             # print('new U', new_U)
-            goal_distance = get_state_gaol_delta(s, g, initial_data_table)
+            goal_distance = get_state_goal_delta(s, g, initial_data_table)
             return goal_distance
-            # print('goal_distance', goal_distance)
-            # exit()
-            # break
         else:
             U = new_U
             initial_data_table = new_result
 
 
-
-def delta(s, g, all_cubes):
-    result = create_all_p(s, all_cubes)
-    U = s.copy()
-    while True:
-        new_U, new_result = update_delta(s, result, U, all_cubes)
-        if result == new_result:
-            # print('final result: ', result)
-            goal_distance = get_state_gaol_delta(s, g, result)
-            break
-        else:
-            U = new_U
-            result = new_result
-    # print(goal_distance)
-    return goal_distance
-
-
-def heuristic_forward_search(pi, s, g, all_cubes):
-    print('state', s)
+def heuristic_forward_search(pi, s, g, all_cubes, seen_states):
+    s = sorted(s)
+    stuple = tuple(s)
+    if stuple in seen_states:
+        return False
+    seen_states.add(tuple(s))
+    print('len(seen_states):', len(seen_states))
+    show_state(s)
     if satisfies(s, g):
         return pi
 
     # options = actions
     options = applicable_options(s, all_cubes)
-    print('options: ', options)
-    # list of delta0(lambda(s,a), g) for different actions a
-    delta_with_g = []
+    # print('options: ', [(o[0].__name__, o[1][1:]) for o in options], '\n\n')
+    # list of delta2(lambda(s,a), g) for different actions a
+    delta_outputs = []
 
     # list of lambda(s, a) for different actions a
     lambdas = []
     actions = []
+
     # 3rd line of HFS function (for delta0)
-    # TODO implementation is based on delta0. We need implementation for delta2!
     for action_function, action_args, actions_preconds in options:
         effects, action = action_function(*action_args, just_positive=False)
         # print('action function is: ', action, 'action effects: ', effects)
-        # delta_out = delta(effects, g, all_cubes)
         delta_out = delta_2(effects, g, all_cubes)
         lambdas.append(effects)
         actions.append(action)
-        delta_with_g.append(delta_out)
-    # print('actions', actions)
-    # print('delta', delta_with_g)
+        delta_outputs.append(delta_out)
 
     # "while" part of HFS function
     while options:
+        print('options:', actions)
+        print('scores:', delta_outputs)
+
         # 5th and 6th line of HFS function
-        selected_action_index = np.argmin(delta_with_g)
+        selected_action_index = np.argmin(delta_outputs)
+        print('selected option:', options[selected_action_index][0].__name__, options[selected_action_index][1][1:],
+              '\n######################################################################################\n')
         options.pop(selected_action_index)
-        new_a = actions[selected_action_index]
+        next_state = lambdas.pop(selected_action_index)
+        new_action = actions.pop(selected_action_index)
+        delta_outputs.pop(selected_action_index)
 
         # 7th line of HFS function
-        pi_prime = heuristic_forward_search(pi + [new_a], lambdas[selected_action_index], g, all_cubes)
+        pi_prime = heuristic_forward_search(pi + [new_action], next_state, g, all_cubes, seen_states)
 
         # 8th line of HFS function
         if pi_prime is not False:
@@ -280,13 +234,14 @@ def heuristic_forward_search(pi, s, g, all_cubes):
 
 
 def main():
+    t = time()
     pi = []
-    s0 = load_initial_state('blocks-world (simplified)/reversal4.txt')
-    print(s0)
-    show_state(s0['initial'])
-    show_state(s0['goal'])
-    pi = heuristic_forward_search(pi, s0['initial'], s0['goal'], s0['cubes'])
+    data = load_initial_state('blocks-world (simplified)/large-a.txt')
+    print(data)
+    # show_state(data['goal'])
+    pi = heuristic_forward_search(pi, data['initial'], data['goal'], data['cubes'], set())
     print(pi)
+    print('time_spent:', time() - t)
 
 
 main()

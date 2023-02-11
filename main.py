@@ -1,5 +1,4 @@
 from time import time
-
 import numpy as np
 from initial import load_initial_state
 from operators import operators
@@ -76,7 +75,8 @@ def initialize_delta_table(s, all_cubes):
                         level_2_result[(s, tuple(temp_list))] = np.inf
 
     merged_result = {}
-    for d in (result, level_2_result): merged_result.update(d)
+    for d in (result, level_2_result):
+        merged_result.update(d)
     return merged_result
 
 
@@ -128,8 +128,6 @@ def get_delta_two_predicates(s, delta_table, preconds, positive_effects):
 def update_delta_2(s, delta_table, U, all_cubes):
     result = delta_table.copy()
     options = applicable_options(U, all_cubes)
-    # print('curren U is: ', U)
-    # print('applicable options: ', [i[0] for i in options])
     for action_function, action_args, actions_preconds in options:
         positive_effects = action_function(*action_args, just_positive=True)
         before_len = len(U)
@@ -137,8 +135,6 @@ def update_delta_2(s, delta_table, U, all_cubes):
         U = list(set(U))
         if len(U) == before_len:
             continue
-        # print(action_function)
-        # print('positive effects: ', positive_effects)
         for p in positive_effects:
             psd = get_delta_one_predicate(s, result, actions_preconds)
             result[(tuple(s), p)] = min(result[(tuple(s), p)], psd)
@@ -154,10 +150,6 @@ def get_state_goal_delta(s, g, result):
         dist = get_pair_preconds_delta(s, result, list(comb))
         dist_list.append(dist)
     return max(dist_list)
-    # dist = 0
-    # for item in g:
-    #     dist += result[(tuple(s), item)]
-    # return dist
 
 
 def delta_2(s, g, all_cubes):
@@ -166,11 +158,8 @@ def delta_2(s, g, all_cubes):
     counter = 1
     while True:
         new_U, new_result = update_delta_2(s, initial_data_table, U, all_cubes)
-        # print(counter, 'rrrrrr', new_result)
         counter += 1
         if initial_data_table == new_result:
-            # print('final result: ', new_result)
-            # print('new U', new_U)
             goal_distance = get_state_goal_delta(s, g, initial_data_table)
             return goal_distance
         else:
@@ -191,7 +180,7 @@ def heuristic_forward_search(pi, s, g, all_cubes, seen_states):
 
     # options = actions
     options = applicable_options(s, all_cubes)
-    # print('options: ', [(o[0].__name__, o[1][1:]) for o in options], '\n\n')
+
     # list of delta2(lambda(s,a), g) for different actions a
     delta_outputs = []
 
@@ -202,7 +191,6 @@ def heuristic_forward_search(pi, s, g, all_cubes, seen_states):
     # 3rd line of HFS function (for delta0)
     for action_function, action_args, actions_preconds in options:
         effects, action = action_function(*action_args, just_positive=False)
-        # print('action function is: ', action, 'action effects: ', effects)
         delta_out = delta_2(effects, g, all_cubes)
         lambdas.append(effects)
         actions.append(action)
@@ -236,9 +224,8 @@ def heuristic_forward_search(pi, s, g, all_cubes, seen_states):
 def main():
     t = time()
     pi = []
-    data = load_initial_state('blocks-world (simplified)/large-a.txt')
+    data = load_initial_state('blocks-world (simplified)/twelve-step.txt')
     print(data)
-    # show_state(data['goal'])
     pi = heuristic_forward_search(pi, data['initial'], data['goal'], data['cubes'], set())
     print(pi)
     print('time_spent:', time() - t)

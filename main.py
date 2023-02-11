@@ -221,6 +221,7 @@ def delta_2(s, g, all_cubes):
             initial_data_table = new_result
     pass
 
+
 def delta(s, g, all_cubes):
     # see first line of implementation of delta function in page 8 of slide
     # creating all predicates (all p) of delta0 list named "result"

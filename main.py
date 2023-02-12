@@ -1,6 +1,7 @@
 from time import time
 import numpy as np
-from initial import load_initial_state
+# from initial import load_initial_state
+from new_initial import load_initial_state
 from operators import operators
 from show_state import show_state
 import itertools
@@ -224,10 +225,10 @@ def heuristic_forward_search(pi, s, g, all_cubes, seen_states):
 def main():
     t = time()
     pi = []
-    data = load_initial_state('blocks-world (simplified)/twelve-step.txt')
+    data = load_initial_state('blocks-world (simplified)/1-gripper.txt')
     print(data)
-    pi = heuristic_forward_search(pi, data['initial'], data['goal'], data['cubes'], set())
-    print(pi)
+    # pi = heuristic_forward_search(pi, data['initial'], data['goal'], data['objects'], set())
+    # print(pi)
     print('time_spent:', time() - t)
 
 

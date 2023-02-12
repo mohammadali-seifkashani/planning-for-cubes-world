@@ -1,6 +1,3 @@
-from operators import Operators
-
-
 def load_initial_state(filename):
     result = {
         'cubes': [],
